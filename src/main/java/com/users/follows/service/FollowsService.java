@@ -46,10 +46,10 @@ public class FollowsService {
 
     @Async
     public void addNewUser(String username) {
-        if (usernameRepository.existsByUsername(username)) {
-            log.info("User {} already exists in the database", username);
-            return;
-        }
+//        if (usernameRepository.existsByUsername(username)) {
+//            log.info("User {} already exists in the database", username);
+//            return;
+//        }
         try {
             Profile profile = instagram.getProfile(username);
             int followingsCount = profile.followings;
@@ -70,6 +70,13 @@ public class FollowsService {
                 }
                 for (UserRepresentation user : followings) {
                     addNewFollowUser(profile.pk, profile.username, user.pk(), user.username());
+                }
+                try {
+                    int sleepTime = 20000 + (int) (Math.random() * 40000);
+                    log.info("Sleeping for {} milliseconds to avoid rate limiting", sleepTime);
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    log.error("Thread interrupted while sleeping: {}", e.getMessage());
                 }
             }
             log.info("adicão das pessoas que o {} segue finalizada com sucesso!", username);

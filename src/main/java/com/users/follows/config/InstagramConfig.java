@@ -22,6 +22,6 @@ public class InstagramConfig {
     @Bean
     public JxInsta jxInstaClient() throws InstagramException, IOException {
         log.info("Creating singleton Instagram client with user: {}", username);
-        return new JxInsta(username, password, JxInsta.LoginType.WEB_AUTHENTICATION);
+        return new JxInsta(username, password, JxInsta.LoginType.APP_AUTHENTICATION);
     }
 }
