@@ -36,6 +36,7 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "5050:80"
     depends_on:
@@ -45,6 +46,9 @@ services:
     dns:
       - 8.8.8.8
       - 1.1.1.1
+    volumes:
+      - ./monitoring/pgadmin/servers.json:/pgadmin4/servers.json
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus
