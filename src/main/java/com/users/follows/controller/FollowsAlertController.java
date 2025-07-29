@@ -2,12 +2,10 @@ package com.users.follows.controller;
 
 import com.users.follows.model.FollowAlert;
 import com.users.follows.service.FollowAlertService;
+import com.users.follows.service.PublishAlertService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,9 +15,11 @@ import java.util.List;
 public class FollowsAlertController {
 
     private final FollowAlertService followAlertService;
+    private final PublishAlertService publishAlert;
 
-    public FollowsAlertController(FollowAlertService followAlertService) {
+    public FollowsAlertController(FollowAlertService followAlertService, PublishAlertService publishAlert) {
         this.followAlertService = followAlertService;
+        this.publishAlert = publishAlert;
     }
 
     @GetMapping("/search")
@@ -34,5 +34,14 @@ public class FollowsAlertController {
                     .body(List.of(new FollowAlert("Error", "Invalid username", "Username cannot be null or empty")));
         }
         return ResponseEntity.ok(followAlertService.search(username, date, page, size));
+    }
+
+    @PostMapping("/publish")
+    public ResponseEntity<String> publishAlert(@RequestParam String username, @RequestParam String followingUsername) {
+        if (username == null || username.isEmpty() || followingUsername == null || followingUsername.isEmpty()) {
+            return ResponseEntity.badRequest().body("Username and followingUsername cannot be null or empty");
+        }
+        publishAlert.publishAlert(username, followingUsername);
+        return ResponseEntity.ok("Follow alert published for " + username + " following " + followingUsername);
     }
 }

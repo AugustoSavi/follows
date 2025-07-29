@@ -12,6 +12,17 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  cloud:
+    aws:
+      region:
+        static: us-east-1
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID:teste}
+        secret-key: ${AWS_SECRET_ACCESS_KEY:teste}
+      s3:
+        useLocalProfile: ${USE_LOCAL_PROFILE:true}
+        endpoint: ${AWS_S3_ENDPOINT:http://localhost:4566}
+        bucket: follows-bucket
 
 server:
   error:

@@ -10,5 +10,5 @@ public interface UsernameRepository extends JpaRepository<Username, Long> {
     boolean existsById(@NotNull Long id);
 
     boolean existsByUsername(@NotNull String username);
-
+    Username getUsernamesByUsername(@NotNull String username);
 }

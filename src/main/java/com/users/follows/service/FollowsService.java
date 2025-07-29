@@ -11,6 +11,7 @@ import com.users.follows.model.Username;
 import com.users.follows.repository.FollowAlertRepository;
 import com.users.follows.repository.FollowRepository;
 import com.users.follows.repository.UsernameRepository;
+import com.users.follows.representation.AddUsernameRepresentation;
 import com.users.follows.representation.UserRepresentation;
 import com.users.follows.util.JsonConverter;
 import lombok.extern.slf4j.Slf4j;
@@ -47,25 +48,22 @@ public class FollowsService {
     }
 
     @Async
-    public void addNewUser(String username) {
-//        if (usernameRepository.existsByUsername(username)) {
-//            log.info("User {} already exists in the database", username);
-//            return;
-//        }
+    public void addNewUser(AddUsernameRepresentation username) {
         try {
-            Profile profile = instagram.getProfile(username);
+            Profile profile = instagram.getProfile(username.username());
             int followingsCount = profile.followings;
             int interacoes = (followingsCount / NUMERO_DE_SEGUIDORES_A_BUSCAR) + (followingsCount % NUMERO_DE_SEGUIDORES_A_BUSCAR > 0 ? 1 : 0);
 
             if (followingsCount == 0) {
-                log.info("User {} has no followings to add", username);
+                log.info("User {} has no followings to add", username.username());
                 return;
             }
-            usernameRepository.save(new Username(profile.pk, profile.username));
+
+            usernameRepository.save(new Username(profile.pk, profile.username, username.key_imagem_publicacao()));
 
             log.info("Profile {} segue {}, sera realizado: {} interações", profile.full_name, profile.followings, interacoes);
-            for (int i = 1; i < interacoes; i++) {
-                log.info("Buscando seguidores do usuário {}: Interação {} de {}", username, i, interacoes);
+            for (int i = 1; i <= interacoes; i++) {
+                log.info("Buscando seguidores do usuário {}: Interação {} de {}", username.username(), i, interacoes);
 
                 List<UserRepresentation> followings = getFollowings(profile.pk, instagram, NUMERO_DE_SEGUIDORES_A_BUSCAR * i);
                 if (followings.isEmpty()) {
@@ -98,7 +96,7 @@ public class FollowsService {
             int interacoes = (followingsCount / NUMERO_DE_SEGUIDORES_A_BUSCAR) + (followingsCount % NUMERO_DE_SEGUIDORES_A_BUSCAR > 0 ? 1 : 0);
 
             log.info("Profile {} segue {}, sera realizado: {}", profile.full_name, profile.followings, interacoes);
-            for (int i = 1; i < interacoes; i++) {
+            for (int i = 1; i <= interacoes; i++) {
                 List<UserRepresentation> followings = getFollowings(profile.pk, instagram, NUMERO_DE_SEGUIDORES_A_BUSCAR * i);
                 if (followings.isEmpty()) {
                     log.info("Nao existem mais seguidores para serem buscados");
