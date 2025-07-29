@@ -5,6 +5,6 @@ scrape_configs:
   - job_name: 'spring-actuator'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['app:8080']
+      - targets: ['172.17.0.1:8080']
         labels:
           application: 'follows-service'

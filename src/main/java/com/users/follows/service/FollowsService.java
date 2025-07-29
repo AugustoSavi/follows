@@ -35,13 +35,15 @@ public class FollowsService {
     private final FollowRepository followRepository;
     private final FollowAlertRepository followAlertRepository;
     private final JsonConverter jsonConverter = new JsonConverter();
+    private final PublishAlertService publishAlertService;
 
 
-    public FollowsService(JxInsta instagram, UsernameRepository usernameRepository, FollowRepository followRepository, FollowAlertRepository followAlertRepository) {
+    public FollowsService(JxInsta instagram, UsernameRepository usernameRepository, FollowRepository followRepository, FollowAlertRepository followAlertRepository, PublishAlertService publishAlertService) {
         this.instagram = instagram;
         this.usernameRepository = usernameRepository;
         this.followRepository = followRepository;
         this.followAlertRepository = followAlertRepository;
+        this.publishAlertService = publishAlertService;
     }
 
     @Async
@@ -63,6 +65,8 @@ public class FollowsService {
 
             log.info("Profile {} segue {}, sera realizado: {} interações", profile.full_name, profile.followings, interacoes);
             for (int i = 1; i < interacoes; i++) {
+                log.info("Buscando seguidores do usuário {}: Interação {} de {}", username, i, interacoes);
+
                 List<UserRepresentation> followings = getFollowings(profile.pk, instagram, NUMERO_DE_SEGUIDORES_A_BUSCAR * i);
                 if (followings.isEmpty()) {
                     log.info("buscamos todas as pessoas que {} segue!", username);
@@ -72,7 +76,7 @@ public class FollowsService {
                     addNewFollowUser(profile.pk, profile.username, user.pk(), user.username());
                 }
                 try {
-                    int sleepTime = 20000 + (int) (Math.random() * 40000);
+                    int sleepTime = 20000 + (int) (Math.random() * 20000);
                     log.info("Sleeping for {} milliseconds to avoid rate limiting", sleepTime);
                     Thread.sleep(sleepTime);
                 } catch (InterruptedException e) {
@@ -101,7 +105,10 @@ public class FollowsService {
                     break;
                 }
                 for (UserRepresentation user : followings) {
-                    addNewFollowUser(profile.pk, profile.username, user.pk(), user.username());
+                    boolean newFollowUser = addNewFollowUser(profile.pk, profile.username, user.pk(), user.username());
+                    if (newFollowUser) {
+                        publishAlertService.publishAlert(profile.username, user.username());
+                    }
                 }
             }
             log.info("Busca de seguidores finalizada com sucesso!");
@@ -115,6 +122,7 @@ public class FollowsService {
         if (maxId > NUMERO_DE_SEGUIDORES_A_BUSCAR) {
             url += "&max_id=" + maxId;
         }
+        log.info("Fetching followings from URL: {}", url);
         Request req = Utils.createGetRequest(url, authInfo);
 
         try (Response response = Utils.call(req, authInfo)) {

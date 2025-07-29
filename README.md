@@ -10,12 +10,15 @@ Utiliza a biblioteca `JxInsta` para interagir com a API privada do Instagram e m
 
 ## 🚀 Funcionalidades
 
-- 🔍 Adicionar um usuário e listar todas as contas que ele segue.
-- ♻️ Atualizar os dados de seguidos de um usuário.
-- 📩 Gerar alertas para cada nova conta seguida.
+- 🔍 Adicionar um usuário e todas as contas que ele segue do instagram.
+- ♻️ Atualizar os dados de seguidos de um usuário do instagram.
+- 📩 Gerar alertas para cada nova conta seguida do instagram.
 - 🗂 Armazenar histórico de "seguindo".
 - 📊 Monitoramento via Prometheus + Grafana.
 - 🌐 APIs REST para integração com frontends ou sistemas externos.
+
+## TODO
+- [ ] Postar a notificação timeline da conta
 
 ---
 
