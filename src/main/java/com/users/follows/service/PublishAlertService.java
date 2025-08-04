@@ -26,7 +26,6 @@ public class PublishAlertService {
         this.s3Service = s3Service;
     }
 
-    @Async
     public void publishAlert(String username, String followingUsername) {
         try {
             Username usernameOrigem = usernameRepository.getUsernamesByUsername(username);
@@ -40,16 +39,15 @@ public class PublishAlertService {
                 return;
             }
 
-            String alertMessage = String.format("\uD83D\uDD75\uFE0F \uD83D\uDEA8 Alerta: %s começou a seguir %s no instagram. Profile picture: %s, Following profile picture: %s",
-                    usernameOrigem.getUsername(), usernameDestino.getUsername(), usernameOrigem.getKey_imagem(), usernameDestino.getKey_imagem());
+            String alertMessage = String.format("\uD83D\uDD75\uFE0F \uD83D\uDEA8 Alerta: @%s começou a seguir @%s no instagram.", usernameOrigem.getUsername(), usernameDestino.getUsername());
 
             byte[] imagemUsernameOrigem = redimensionarImagem(s3Service.download(usernameOrigem.getKey_imagem()));
             byte[] imagemUsernameDestino = redimensionarImagem(s3Service.download(usernameDestino.getKey_imagem()));
             InputStream imagem = unirImagensLadoALado(imagemUsernameOrigem, imagemUsernameDestino);
 
-//            instagram.postPicture(imagem, alertMessage, false);
+            instagram.postPicture(imagem, alertMessage, false);
 
-            salvarImagemNaRaiz(imagem, String.format("%s_x_%s.jpg", username, followingUsername));
+//            salvarImagemNaRaiz(imagem, String.format("%s_x_%s.jpg", username, followingUsername));
 
             log.info("New follow alert: {}", alertMessage);
 

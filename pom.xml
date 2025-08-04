@@ -56,7 +56,7 @@
 			<artifactId>jxinsta</artifactId>
 			<version>v1.0-beta-2</version>
 			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/JxInsta-v1.0-beta-2.jar</systemPath>
+			<systemPath>${project.basedir}/lib/JxInsta-fat-1.0.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
