@@ -17,5 +17,5 @@ public class Username {
     @Id
     private Long id;
     private String username;
-    private String url_imagem_publicacao;
+    private String key_imagem;
 }

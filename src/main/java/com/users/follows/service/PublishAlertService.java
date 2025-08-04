@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 @Slf4j
 @Service
@@ -44,14 +41,15 @@ public class PublishAlertService {
             }
 
             String alertMessage = String.format("\uD83D\uDD75\uFE0F \uD83D\uDEA8 Alerta: %s começou a seguir %s no instagram. Profile picture: %s, Following profile picture: %s",
-                    usernameOrigem.getUsername(), usernameDestino.getUsername(), usernameOrigem.getUrl_imagem_publicacao(), usernameDestino.getUrl_imagem_publicacao());
+                    usernameOrigem.getUsername(), usernameDestino.getUsername(), usernameOrigem.getKey_imagem(), usernameDestino.getKey_imagem());
 
-            byte[] imagemUsernameOrigem = s3Service.download(usernameOrigem.getUrl_imagem_publicacao());
-            byte[] imagemUsernameDestino = s3Service.download(usernameDestino.getUrl_imagem_publicacao());
+            byte[] imagemUsernameOrigem = redimensionarImagem(s3Service.download(usernameOrigem.getKey_imagem()));
+            byte[] imagemUsernameDestino = redimensionarImagem(s3Service.download(usernameDestino.getKey_imagem()));
             InputStream imagem = unirImagensLadoALado(imagemUsernameOrigem, imagemUsernameDestino);
 
-            instagram.postPicture(imagem, alertMessage, false);
+//            instagram.postPicture(imagem, alertMessage, false);
 
+            salvarImagemNaRaiz(imagem, String.format("%s_x_%s.jpg", username, followingUsername));
 
             log.info("New follow alert: {}", alertMessage);
 
@@ -61,26 +59,68 @@ public class PublishAlertService {
     }
 
     public InputStream unirImagensLadoALado(byte[] imgBytes1, byte[] imgBytes2) throws IOException {
-        // 1. Converter bytes para BufferedImage
         BufferedImage img1 = ImageIO.read(new ByteArrayInputStream(imgBytes1));
-        BufferedImage img2 = ImageIO.read(new ByteArrayInputStream(imgBytes2));
+        log.info("Dimensões da imagem 1: {}x{}", img1.getWidth(), img1.getHeight());
 
-        // 2. Calcular dimensões da nova imagem
+        BufferedImage img2 = ImageIO.read(new ByteArrayInputStream(imgBytes2));
+        log.info("Dimensões da imagem 2: {}x{}", img2.getWidth(), img2.getHeight());
+
         int larguraTotal = img1.getWidth() + img2.getWidth();
         int alturaMaxima = Math.max(img1.getHeight(), img2.getHeight());
 
-        // 3. Criar nova imagem
         BufferedImage imagemFinal = new BufferedImage(larguraTotal, alturaMaxima, BufferedImage.TYPE_INT_RGB);
         Graphics g = imagemFinal.getGraphics();
 
-        // 4. Desenhar as imagens
+        g.setColor(Color.WHITE);
+
         g.drawImage(img1, 0, 0, null);
         g.drawImage(img2, img1.getWidth(), 0, null);
         g.dispose();
 
-        // 5. Converter BufferedImage final para byte[]
+        log.info("Dimensões da imagem final: {}x{}", imagemFinal.getWidth(), imagemFinal.getHeight());
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(imagemFinal, "jpg", baos);
         return new ByteArrayInputStream(baos.toByteArray());
     }
+
+    private void salvarImagemNaRaiz(InputStream imagem, String nomeArquivo) {
+        try {
+            BufferedImage imagemBuffer = ImageIO.read(imagem);
+            if (imagemBuffer == null) {
+                throw new IOException("Não foi possível ler a imagem do InputStream.");
+            }
+
+            File arquivoSaida = new File(nomeArquivo);
+            ImageIO.write(imagemBuffer, "jpg", arquivoSaida);
+
+            System.out.println("Imagem salva em: " + arquivoSaida.getAbsolutePath());
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao salvar a imagem localmente: " + e.getMessage(), e);
+        }
+    }
+
+    private byte[] redimensionarImagem(byte[] imagem) throws IOException {
+        int largura = 540;
+        int altura = 566;
+
+        BufferedImage imgOriginal = ImageIO.read(new ByteArrayInputStream(imagem));
+        if (imgOriginal == null) {
+            throw new IOException("Não foi possível ler a imagem do InputStream.");
+        }
+
+        if (imgOriginal.getWidth() == largura && imgOriginal.getHeight() == altura) {
+            return imagem;
+        }
+
+        BufferedImage imgRedimensionada = new BufferedImage(largura, altura, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = imgRedimensionada.createGraphics();
+        g.drawImage(imgOriginal, 0, 0, largura, altura, null);
+        g.dispose();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(imgRedimensionada, "jpg", baos);
+        return baos.toByteArray();
+    }
+
 }

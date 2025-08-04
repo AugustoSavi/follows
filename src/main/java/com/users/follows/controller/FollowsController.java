@@ -61,4 +61,22 @@ public class FollowsController {
         followsService.updateNewFollowings(username);
         return ResponseEntity.ok("Following update initiated for user: " + username);
     }
+
+    @PostMapping(path = "/update/image/{username}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<String> updateImage(@PathVariable String username,
+                                              @RequestPart(value = "file", required = false) MultipartFile file) {
+        if (username == null || username.isEmpty()) {
+            return ResponseEntity.badRequest().body("Username cannot be null or empty");
+        }
+
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File cannot be null or empty");
+        }
+
+        boolean updated = followsService.updateImageUsuario(username, file);
+        if (!updated) {
+            return ResponseEntity.status(500).body("Failed to update user image");
+        }
+        return ResponseEntity.ok("Following update initiated for user: " + username);
+    }
 }

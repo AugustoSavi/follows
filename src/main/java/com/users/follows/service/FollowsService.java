@@ -19,6 +19,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import port.org.json.JSONArray;
 import port.org.json.JSONObject;
 
@@ -37,14 +38,16 @@ public class FollowsService {
     private final FollowAlertRepository followAlertRepository;
     private final JsonConverter jsonConverter = new JsonConverter();
     private final PublishAlertService publishAlertService;
+    private final S3Service s3Service;
 
 
-    public FollowsService(JxInsta instagram, UsernameRepository usernameRepository, FollowRepository followRepository, FollowAlertRepository followAlertRepository, PublishAlertService publishAlertService) {
+    public FollowsService(JxInsta instagram, UsernameRepository usernameRepository, FollowRepository followRepository, FollowAlertRepository followAlertRepository, PublishAlertService publishAlertService, S3Service s3Service) {
         this.instagram = instagram;
         this.usernameRepository = usernameRepository;
         this.followRepository = followRepository;
         this.followAlertRepository = followAlertRepository;
         this.publishAlertService = publishAlertService;
+        this.s3Service = s3Service;
     }
 
     @Async
@@ -85,6 +88,30 @@ public class FollowsService {
         } catch (InstagramException | IOException e) {
             log.error("Erro ao adicionar as pessoas que o user {} segue: {}", username, e.getMessage());
         }
+    }
+
+    public boolean updateImageUsuario(String username, MultipartFile file) {
+        Username usernameExists = usernameRepository.getUsernamesByUsername(username);
+        if (usernameExists == null) {
+            log.warn("Username {} does not exist in the database", username);
+            return false;
+        }
+
+        String uploaded;
+        log.info("Arquivo recebido: {}", file.getOriginalFilename());
+        uploaded = s3Service.upload(file);
+        log.info("Arquivo enviado para o S3: {}", uploaded);
+
+        if (uploaded == null || uploaded.isEmpty()) {
+            log.error("Failed to upload file to S3");
+            return false;
+        }
+
+        usernameExists.setKey_imagem(uploaded);
+        usernameRepository.save(usernameExists);
+
+        log.info("update da imagem do usuario {} finalizada com sucesso!", username);
+        return true;
     }
 
 
@@ -161,4 +188,5 @@ public class FollowsService {
     private boolean isFollowing(FollowsId followId) {
         return followRepository.existsById(followId);
     }
+
 }
