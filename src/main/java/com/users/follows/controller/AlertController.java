@@ -12,12 +12,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/alerts")
-public class FollowsAlertController {
+public class AlertController {
 
     private final FollowAlertService followAlertService;
     private final PublishAlertService publishAlert;
 
-    public FollowsAlertController(FollowAlertService followAlertService, PublishAlertService publishAlert) {
+    public AlertController(FollowAlertService followAlertService, PublishAlertService publishAlert) {
         this.followAlertService = followAlertService;
         this.publishAlert = publishAlert;
     }
